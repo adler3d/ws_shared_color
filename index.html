@@ -1,0 +1,48 @@
+<html>
+  <style>.slidecontainer{width:100%;}.slider{width:100%;height:50px;background:#d3d3d3;}</style>
+  <body>
+  <center><h1 id="value">value</h1></center>
+  <div class="slidecontainer">
+    <input type="range" min="1" max="1000" value="500" class="slider" id="r" oninput="showVal(this)" onchange="showVal(this)">
+    <input type="range" min="1" max="1000" value="500" class="slider" id="g" oninput="showVal(this)" onchange="showVal(this)">
+    <input type="range" min="1" max="1000" value="500" class="slider" id="b" oninput="showVal(this)" onchange="showVal(this)">
+  </div>
+    <script>
+      var c={r:0,g:0,b:0,iter:0};
+      function upd(v){
+        var ug={};
+        var f=v=>{return (v*255/1000)|0};
+        Object.keys(c).map(e=>{
+          var bar=document.getElementById(e);
+          if(bar)bar.value=v[e];
+          c[e]=v[e];ug[e]=f(c[e]);
+        });
+        var s=JSON.stringify(c);document.getElementById("value").innerHTML=s;
+        document.body.style.backgroundColor="rgb("+[ug.r,ug.g,ug.b].join(",")+")";
+        console.log(JSON.stringify(v));
+      }
+      var set_v=s=>{};
+      function showVal(t){
+        c[t.id]=t.value|0;
+        c.iter++;
+        upd(c);
+        set_v(JSON.stringify(c));
+      }
+      function sync(obj){
+        var v=JSON.parse(obj.mem.v);
+        if(v.iter<c.iter)return;
+        upd(v);
+      }
+      //sync();
+      var HOST = location.origin.replace(/^http/, 'ws')
+      var ws = new WebSocket(HOST);
+      var el = document.getElementById('server-time');
+      ws.onopen=()=>{set_v=s=>ws.send(s);};
+      ws.onmessage = function (event) {
+        //console.log(event.data);
+        sync(JSON.parse(event.data));
+        //el.innerHTML = 'Server time: ' + event.data;
+      };
+    </script>
+  </body>
+</html>
